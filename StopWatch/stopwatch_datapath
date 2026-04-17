@@ -1,0 +1,96 @@
+// 26.04.17 15:37
+//1. 시계에서 분이 15에서 멈춤
+//2. 스톱워치에서 run을 누르면 바로 run 동작 안함
+//3. led 불 1,2번이 안들어옴
+//4. 시간 설정을 가서 업다운은 되는데 왼오 동작이 안됨
+//5. 왼오를 누르면 그 후에 업다운이 안됨
+//6. 스톱워치에서 다운누르고 오른쪽 누르면 07.11 , 11.03까지만 나옴 그리고 멈춤
+//7. sw[1]에 대한 시간 설정 모드 추가 x
+
+`timescale 1ns / 1ps
+
+module stopwatch_datapath #(
+    parameter   MSEC_WIDTH =    7,
+                SEC_WIDTH  =    6,
+                MIN_WIDTH  =    6,
+                HOUR_WIDTH =    5
+) (
+    input                       clk,
+    input                       rst,
+
+    input                       i_runstop,
+    input                       i_clear,
+    input                       i_mode,
+
+    output [MSEC_WIDTH-1 : 0]   msec,
+    output [ SEC_WIDTH-1 : 0]   sec,
+    output [ MIN_WIDTH-1 : 0]   min,
+    output [HOUR_WIDTH-1 : 0]   hour
+);
+    wire w_tick_100hz;
+    tick_gen_100hz U_TICK_GEN_100HZ (
+        .clk            (clk),
+        .rst            (rst),
+        .i_runstop      (i_runstop),
+        .i_clear        (i_clear),
+        .o_tick_100hz   (w_tick_100hz)
+    );
+
+    wire w_sec_tick, w_min_tick, w_hour_tick;
+    //msec
+    tick_counter #(
+        .TIMES          (100), 
+        .BIT_WIDTH      (MSEC_WIDTH)
+    ) U_MSEC_TICK_COUNTER (
+        .clk            (clk),
+        .rst            (rst),
+        .i_tick         (w_tick_100hz),
+        .i_clear        (i_clear),
+        .i_mode         (i_mode),
+        .times_counter  (msec),
+        .o_tick         (w_sec_tick)
+    );
+
+    // sec
+    tick_counter #(
+        .TIMES          (60), 
+        .BIT_WIDTH      (SEC_WIDTH)
+    ) U_SEC_TICK_COUNTER (
+        .clk            (clk),
+        .rst            (rst),
+        .i_tick         (w_sec_tick), // from msec o_tick
+        .i_clear        (i_clear),
+        .i_mode         (i_mode),
+        .times_counter  (sec),
+        .o_tick         (w_min_tick)
+    );
+
+    // min
+    tick_counter #(
+        .TIMES          (60), 
+        .BIT_WIDTH      (MIN_WIDTH)
+    ) U_MIN_TICK_COUNTER (
+        .clk            (clk),
+        .rst            (rst),
+        .i_tick         (w_min_tick), // from sec o_tick
+        .i_clear        (i_clear),
+        .i_mode         (i_mode),
+        .times_counter  (min),
+        .o_tick         (w_hour_tick)
+    );
+    
+    // hour
+    tick_counter #(
+        .TIMES          (24), 
+        .BIT_WIDTH      (HOUR_WIDTH)
+    ) U_HOUR_TICK_COUNTER (
+        .clk            (clk),
+        .rst            (rst),
+        .i_tick         (w_hour_tick), // from min o_tick
+        .i_clear        (i_clear),
+        .i_mode         (i_mode),
+        .times_counter  (hour),
+        .o_tick         ()
+    );
+
+endmodule
