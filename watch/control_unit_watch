@@ -1,19 +1,15 @@
-// 26.04.17 15:37
-//1. 시계에서 분이 15에서 멈춤
-//2. 스톱워치에서 run을 누르면 바로 run 동작 안함
-//3. led 불 1,2번이 안들어옴
-//4. 시간 설정을 가서 업다운은 되는데 왼오 동작이 안됨
-//5. 왼오를 누르면 그 후에 업다운이 안됨
-//6. 스톱워치에서 다운누르고 오른쪽 누르면 07.11 , 11.03까지만 나옴 그리고 멈춤
-//7. sw[1]에 대한 시간 설정 모드 추가 x
-
+// 26.04.17 19:17
+//1. led 불 1,2번이 안들어옴
+//2. 시간 설정을 가서 업다운, 왼오 동작이 안됨
+//3. 스톱워치에서 다운 -> 로직 설계
+//4. 시간 설정 모드에서 DP 켜거나 LED
 
 `timescale 1ns / 1ps
 // 시계할 때 복잡하면 control unit 분리해서 2개로 설계
 module control_unit_watch ( // moore machine
     input                   clk,
     input                   rst,
-    input                   display,
+    input                   display, // sw[1]
 
 	input 	                i_left,   
     input                   i_right,    
@@ -48,30 +44,36 @@ module control_unit_watch ( // moore machine
 
     // next, output CL
     always @(*) begin
-        n_state = c_state;
+        n_state = c_state; // 질문~ : 어디서 초기화 해야해?
         o_up   = 1'b0; 
         o_down = 1'b0;
-        if (display) begin
+        /* o_place = 4'b0000; jimin */
+        if (display) begin // 버튼 공유하고 있으니까 watch를 보고 있을 때만 버튼을 반영
             case (c_state)
                 RUN : begin
-                    o_place  = 4'b0000;
-                    o_up     = 1'b0;
-                    o_down   = 1'b0;
-                    if (sw) begin
+                    o_place  = 4'b0000; /*nk*/
+                    o_up     = 1'b0;    /*nk*/
+                    o_down   = 1'b0;    /*nk*/
+                    if (sw[1] & sw[2]) begin // 시계 - 설정모드
                         n_state = SET;
                     end
-                    else begin
+                    else begin // 시계 - 시간
                         n_state = c_state;
                     end
                 end
                 SET: begin
-                    o_place  = 3'b0;
-                    o_up     = 1'b0;
-                    o_down   = 1'b0; 
-                    n_state = HOUR;
+                    o_place  = 3'b0; /*nk*/
+                    o_up     = 1'b0; /*nk*/
+                    o_down   = 1'b0; /*nk*/
+                    if ((!sw[1]) | (!sw[2])) begin // 시계 - 시간 or 스톱워치 - (시계 - 설정)
+                       n_state = RUN; 
+                    end
+                    else begin
+                        n_state = HOUR; 
+                    end
                 end
                 HOUR: begin
-                    if (!sw) begin
+                    if ((!sw[1]) | (!sw[1])) begin
                         n_state = RUN;
                     end
                     else if (i_left) begin 
@@ -88,7 +90,7 @@ module control_unit_watch ( // moore machine
                     end
                 end
                 MIN: begin
-                    if (!sw) begin
+                    if ((!sw[1]) | (!sw[1])) begin
                         n_state = RUN;
                     end
                     else if (i_left) begin 
@@ -105,7 +107,7 @@ module control_unit_watch ( // moore machine
                     end
                 end
                 SEC: begin
-                    if (!sw) begin
+                    if ((!sw[1]) | (!sw[1])) begin
                         n_state = RUN;
                     end
                     else if (i_left) begin 
@@ -122,7 +124,7 @@ module control_unit_watch ( // moore machine
                     end
                 end
                 MSEC: begin
-                    if (!sw) begin
+                    if ((!sw[1]) | (!sw[1])) begin
                         n_state = RUN;
                     end
                     else if (i_left) begin 
@@ -139,11 +141,10 @@ module control_unit_watch ( // moore machine
                     end
                 end
                 PLACE : begin
-                    if (i_up) begin
-                        o_up = 1'b1;
-                    end else if (i_down) begin
-                        o_down = 1'b1;
-                    end else begin
+                    if ((!sw[1]) | (!sw[2])) begin 
+                        n_state = RUN;
+                    end
+                    else begin 
                         case (prev_state)
                             HOUR: begin
                                 o_place = 4'b1000;
@@ -166,13 +167,21 @@ module control_unit_watch ( // moore machine
                                 o_place = 4'b0000;
                             end
                         endcase
-                    end 
+                        if (i_up) begin
+                            o_up = 1'b1;
+                        end 
+                        else if (i_down) begin
+                            o_down = 1'b1;
+                        end 
+                        else begin
+                            n_state = c_state;
+                        end 
+                    end
                 end
-            endcase 
-                 
+            endcase
         end
         else begin
-                n_state = c_state;
+            n_state = c_state;
         end
     end
 endmodule
