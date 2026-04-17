@@ -1,0 +1,141 @@
+// 26.04.17 15:37
+//1. 시계에서 분이 15에서 멈춤
+//2. 스톱워치에서 run을 누르면 바로 run 동작 안함
+//3. led 불 1,2번이 안들어옴
+//4. 시간 설정을 가서 업다운은 되는데 왼오 동작이 안됨
+//5. 왼오를 누르면 그 후에 업다운이 안됨
+//6. 스톱워치에서 다운누르고 오른쪽 누르면 07.11 , 11.03까지만 나옴 그리고 멈춤
+//7. sw[1]에 대한 시간 설정 모드 추가 x
+
+`timescale 1ns / 1ps
+
+module fnd_controller #(
+    parameter   MSEC_WIDTH =    7,
+                SEC_WIDTH  =    6,
+                MIN_WIDTH  =    6,
+                HOUR_WIDTH =    5
+) (
+    input 		                clk,
+    input                       rst,
+    input                       sw, //sw[0], 0: msec_sec, 1:min_hour
+    input   [MSEC_WIDTH-1 : 0]  msec,
+    input   [ SEC_WIDTH-1 : 0]  sec,
+    input   [ MIN_WIDTH-1 : 0]  min,
+    input   [HOUR_WIDTH-1 : 0]  hour,
+
+    output 	[3:0] 	            fnd_com,
+    output 	[7:0] 	            fnd_data,
+    output                      o_led
+);
+    wire 	[3:0] 	            w_msec_digit_1, w_msec_digit_10;
+    wire 	[3:0] 	            w_sec_digit_1, w_sec_digit_10;
+    wire 	[3:0] 	            w_min_digit_1, w_min_digit_10;
+    wire 	[3:0] 	            w_hour_digit_1, w_hour_digit_10;
+    wire 	[2:0] 	            w_digit_sel;
+    wire 	[3:0] 	            w_out_mux_msec_sec, w_out_mux_min_hour, w_out_mux;
+    wire 		                w_1khz; 
+    wire                        w_dot_onff;
+    
+
+    assign o_led = sw;
+
+    clk_div_1khz U_CLK_DIV_1KHZ( 
+        .clk		(clk),
+        .rst		(rst),
+        .o_1khz		(w_1khz) 
+    );
+
+    counter_8 U_COUNTER_8(
+        .clk		(w_1khz), 
+        .rst		(rst),
+        .digit_sel	(w_digit_sel)
+    );
+
+    decoder_2x4 U_DECODER_2X4 (
+        .decoder_in	(w_digit_sel[1:0]),
+        .fnd_com	(fnd_com)
+    );
+
+    // -----
+
+    digit_splitter # (
+        .BIT_WIDTH(MSEC_WIDTH)
+    ) U_MSEC_DS (
+        .digit_in    (msec),
+        .digit_1     (w_msec_digit_1),
+        .digit_10    (w_msec_digit_10)
+    );
+
+    digit_splitter # (
+        .BIT_WIDTH(SEC_WIDTH)
+    ) U_SEC_DS (
+        .digit_in    (sec),
+        .digit_1     (w_sec_digit_1),
+        .digit_10    (w_sec_digit_10)
+    );
+
+    digit_splitter # (
+        .BIT_WIDTH(MIN_WIDTH)
+    ) U_MIN_DS (
+        .digit_in    (min),
+        .digit_1     (w_min_digit_1),
+        .digit_10    (w_min_digit_10)
+    );
+
+    digit_splitter # (
+        .BIT_WIDTH(HOUR_WIDTH)
+    ) U_HOUR_DS (
+        .digit_in    (hour),
+        .digit_1     (w_hour_digit_1),
+        .digit_10    (w_hour_digit_10)
+    );
+
+    // -----
+
+    comparator # (
+    .MSEC_WIDTH(MSEC_WIDTH)
+    ) U_CMP_DOTONOFF (
+        .comp_in(msec),
+        .dot_onoff(w_dot_onff)
+    );
+
+    mux_8x1 U_MUX_MSEC_SEC (
+        .in0		(w_msec_digit_1),
+        .in1		(w_msec_digit_10),
+        .in2		(w_sec_digit_1),
+        .in3		(w_sec_digit_10),
+        .in4		(4'hF),
+        .in5		(4'hF),
+        .in6		({3'b111, w_dot_onff}),
+        .in7        (4'hF),
+        .sel		(w_digit_sel),  
+        .out_mux	(w_out_mux_msec_sec)
+    );
+
+    mux_8x1 U_MUX_MIN_HOUR (
+        .in0		(w_min_digit_1),
+        .in1		(w_min_digit_10),
+        .in2		(w_hour_digit_1),
+        .in3		(w_hour_digit_10),
+        .in4		(4'hF),
+        .in5		(4'hF),
+        .in6		({3'b111, w_dot_onff}),
+        .in7        (4'hF),
+        .sel		(w_digit_sel),  
+        .out_mux	(w_out_mux_min_hour)
+    );
+
+    //
+    mux_2x1 U_MUX_OUT (
+        .in0		(w_out_mux_msec_sec),
+        .in1		(w_out_mux_min_hour),
+        .sel		(sw),  
+        .out_mux	(w_out_mux)
+    );
+
+    bcd U_BCD (
+        .bin		(w_out_mux),
+        .bcd_data	(fnd_data)
+    );
+
+endmodule
