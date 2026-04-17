@@ -1,0 +1,178 @@
+// 26.04.17 15:37
+//1. 시계에서 분이 15에서 멈춤
+//2. 스톱워치에서 run을 누르면 바로 run 동작 안함
+//3. led 불 1,2번이 안들어옴
+//4. 시간 설정을 가서 업다운은 되는데 왼오 동작이 안됨
+//5. 왼오를 누르면 그 후에 업다운이 안됨
+//6. 스톱워치에서 다운누르고 오른쪽 누르면 07.11 , 11.03까지만 나옴 그리고 멈춤
+//7. sw[1]에 대한 시간 설정 모드 추가 x
+
+
+`timescale 1ns / 1ps
+// 시계할 때 복잡하면 control unit 분리해서 2개로 설계
+module control_unit_watch ( // moore machine
+    input                   clk,
+    input                   rst,
+    input                   display,
+
+	input 	                i_left,   
+    input                   i_right,    
+    input                   i_down,  
+    input                   i_up, 
+    input       [2:0]       sw,
+	 
+    output  reg             o_down,  
+    output  reg             o_up, 
+    output  reg [3:0]       o_place,
+
+    output      [1:0]       o_led 
+    );
+
+    reg [2:0] c_state, n_state, prev_state;
+    parameter RUN = 3'b000, SET = 3'b001, HOUR = 3'b010, MIN = 3'b011, SEC = 3'b100, MSEC = 3'b101, PLACE = 3'b110;
+
+    assign o_led[0] = sw[1]; 
+    assign o_led[1] = sw[2]; 
+
+    // state register 
+    always @(posedge clk, posedge rst) begin
+        if (rst) begin
+            c_state <= RUN;
+            prev_state <= RUN;
+        end
+        else begin
+            c_state <= n_state;
+            prev_state <= c_state;
+        end
+    end
+
+    // next, output CL
+    always @(*) begin
+        n_state = c_state;
+        o_up   = 1'b0; 
+        o_down = 1'b0;
+        if (display) begin
+            case (c_state)
+                RUN : begin
+                    o_place  = 4'b0000;
+                    o_up     = 1'b0;
+                    o_down   = 1'b0;
+                    if (sw) begin
+                        n_state = SET;
+                    end
+                    else begin
+                        n_state = c_state;
+                    end
+                end
+                SET: begin
+                    o_place  = 3'b0;
+                    o_up     = 1'b0;
+                    o_down   = 1'b0; 
+                    n_state = HOUR;
+                end
+                HOUR: begin
+                    if (!sw) begin
+                        n_state = RUN;
+                    end
+                    else if (i_left) begin 
+                        n_state = MSEC;
+                    end
+                    else if (i_right) begin
+                        n_state = MIN;
+                    end
+                    else if (i_up | i_down) begin  
+                        n_state = PLACE;
+                    end
+                    else begin          
+                        n_state = c_state;
+                    end
+                end
+                MIN: begin
+                    if (!sw) begin
+                        n_state = RUN;
+                    end
+                    else if (i_left) begin 
+                        n_state = HOUR;
+                    end
+                    else if (i_right) begin
+                        n_state = SEC;
+                    end
+                    else if (i_up | i_down) begin  
+                        n_state = PLACE;
+                    end
+                    else begin          
+                        n_state = c_state;
+                    end
+                end
+                SEC: begin
+                    if (!sw) begin
+                        n_state = RUN;
+                    end
+                    else if (i_left) begin 
+                        n_state = MIN;
+                    end
+                    else if (i_right) begin
+                        n_state = MSEC;
+                    end
+                    else if (i_up | i_down) begin  
+                        n_state = PLACE;
+                    end
+                    else begin          
+                        n_state = c_state;
+                    end
+                end
+                MSEC: begin
+                    if (!sw) begin
+                        n_state = RUN;
+                    end
+                    else if (i_left) begin 
+                        n_state = SEC;
+                    end
+                    else if (i_right) begin
+                        n_state = HOUR;
+                    end
+                    else if (i_up | i_down) begin  
+                        n_state = PLACE;
+                    end
+                    else begin          
+                        n_state = c_state;
+                    end
+                end
+                PLACE : begin
+                    if (i_up) begin
+                        o_up = 1'b1;
+                    end else if (i_down) begin
+                        o_down = 1'b1;
+                    end else begin
+                        case (prev_state)
+                            HOUR: begin
+                                o_place = 4'b1000;
+                                n_state = HOUR;
+                            end
+                            MIN: begin
+                                o_place = 4'b0100;
+                                n_state = MIN;
+                            end
+                            SEC: begin
+                                o_place = 4'b0010;
+                                n_state = SEC;
+                            end
+                            MSEC: begin
+                                o_place = 4'b0001;
+                                n_state = MSEC;
+                            end
+                            default: begin
+                                n_state = SET;
+                                o_place = 4'b0000;
+                            end
+                        endcase
+                    end 
+                end
+            endcase 
+                 
+        end
+        else begin
+                n_state = c_state;
+        end
+    end
+endmodule
