@@ -1,11 +1,8 @@
-// 26.04.17 15:37
-//1. 시계에서 분이 15에서 멈춤
-//2. 스톱워치에서 run을 누르면 바로 run 동작 안함
-//3. led 불 1,2번이 안들어옴
-//4. 시간 설정을 가서 업다운은 되는데 왼오 동작이 안됨
-//5. 왼오를 누르면 그 후에 업다운이 안됨
-//6. 스톱워치에서 다운누르고 오른쪽 누르면 07.11 , 11.03까지만 나옴 그리고 멈춤
-//7. sw[1]에 대한 시간 설정 모드 추가 x
+// 26.04.17 19:17
+//1. led 불 1,2번이 안들어옴
+//2. 시간 설정을 가서 업다운, 왼오 동작이 안됨
+//3. 스톱워치에서 다운 -> 로직 설계
+//4. 시간 설정 모드에서 DP 켜거나 LED
 
 `timescale 1ns / 1ps
 
@@ -88,7 +85,12 @@ module top_stopwatch_watch(
         .o_mode         (w_mode)
     );
 
-    stopwatch_datapath U_STOPWATCH_DATAPATH(
+    stopwatch_datapath  #(
+        .MSEC_WIDTH (MSEC_WIDTH),
+        .SEC_WIDTH  (SEC_WIDTH),
+        .MIN_WIDTH  (MIN_WIDTH),
+        .HOUR_WIDTH (HOUR_WIDTH)
+    ) U_STOPWATCH_DATAPATH(
         .clk            (clk),
         .rst            (rst),
         .i_runstop      (w_runstop),
@@ -119,13 +121,18 @@ module top_stopwatch_watch(
         .o_led          (o_led[2:1])
         );
 
-    watch_datapath U_WATCH_DATAPATH(
+    watch_datapath # (
+        .MSEC_WIDTH (MSEC_WIDTH),
+        .SEC_WIDTH  (SEC_WIDTH),
+        .MIN_WIDTH  (MIN_WIDTH),
+        .HOUR_WIDTH (HOUR_WIDTH)
+    ) U_WATCH_DATAPATH(
         .clk            (clk),
         .rst            (rst),
         .sw             (sw[2]),
         .place          (w_place),
-        .i_up           (w_btnU),
-        .i_down         (w_btnD),
+        .i_up           (w_up),
+        .i_down         (w_down),
         .msec           (w_msec_wt),
         .sec            (w_sec_wt),
         .min            (w_min_wt),
@@ -133,28 +140,36 @@ module top_stopwatch_watch(
     );
     
 
-    mux_2x1 U_MUX_MSEC_FND (
+    mux_2x1 #(
+        .BIT_WIDTH(MSEC_WIDTH)
+    ) U_MUX_MSEC_FND (
         .in0(w_msec),
         .in1(w_msec_wt),
         .sel(sw[1]),
         .out_mux(w_fnd_msec)
     );
 
-    mux_2x1 U_MUX_SEC_FND (
+    mux_2x1 #(
+        .BIT_WIDTH(SEC_WIDTH)
+    ) U_MUX_SEC_FND (
         .in0(w_sec),
         .in1(w_sec_wt),
         .sel(sw[1]),
         .out_mux(w_fnd_sec)
     );
 
-    mux_2x1 U_MUX_MIN_FND (
+    mux_2x1 #(
+        .BIT_WIDTH(MIN_WIDTH)
+    ) U_MUX_MIN_FND (
         .in0(w_min),
         .in1(w_min_wt),
         .sel(sw[1]),
         .out_mux(w_fnd_min)
     );
 
-    mux_2x1 U_MUX_HOUR_FND (
+    mux_2x1 #(
+        .BIT_WIDTH(HOUR_WIDTH)
+    ) U_MUX_HOUR_FND (
         .in0(w_hour),
         .in1(w_hour_wt),
         .sel(sw[1]),
