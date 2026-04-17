@@ -1,0 +1,46 @@
+// 26.04.17 15:37
+//1. 시계에서 분이 15에서 멈춤
+//2. 스톱워치에서 run을 누르면 바로 run 동작 안함
+//3. led 불 1,2번이 안들어옴
+//4. 시간 설정을 가서 업다운은 되는데 왼오 동작이 안됨
+//5. 왼오를 누르면 그 후에 업다운이 안됨
+//6. 스톱워치에서 다운누르고 오른쪽 누르면 07.11 , 11.03까지만 나옴 그리고 멈춤
+//7. sw[1]에 대한 시간 설정 모드 추가 x
+
+`timescale 1ns / 1ps
+
+module tick_gen_100hz_watch (
+    input       clk,
+    input       rst,
+    input       sw,
+
+    output reg  o_tick_100hz
+
+);
+    // 100Hz counter number * 1000 for simulation
+    parameter F_COUNT = 100_000_000 / 100;
+    reg [$clog2(F_COUNT)-1:0] counter_reg;  
+
+    always @(posedge clk, posedge rst) begin
+        if (rst) begin
+            counter_reg     <= 0;
+            o_tick_100hz    <= 1'b0;
+        end 
+        else begin
+            if (!sw) begin 
+                counter_reg     <= counter_reg + 1;
+                o_tick_100hz    <= 1'b0;
+                if (counter_reg == F_COUNT - 1) begin
+                    counter_reg     <= 0;
+                    o_tick_100hz    <= 1'b1;
+                end else begin 
+                    o_tick_100hz    <= 1'b0;
+                end
+            end
+            else begin
+                counter_reg     <= 0;
+                o_tick_100hz    <= 1'b0;
+            end
+        end
+    end
+endmodule
