@@ -1,0 +1,89 @@
+// 26.04.17 15:37
+//1. 시계에서 분이 15에서 멈춤
+//2. 스톱워치에서 run을 누르면 바로 run 동작 안함
+//3. led 불 1,2번이 안들어옴
+//4. 시간 설정을 가서 업다운은 되는데 왼오 동작이 안됨
+//5. 왼오를 누르면 그 후에 업다운이 안됨
+//6. 스톱워치에서 다운누르고 오른쪽 누르면 07.11 , 11.03까지만 나옴 그리고 멈춤
+//7. sw[1]에 대한 시간 설정 모드 추가 x
+
+`timescale 1ns / 1ps
+module control_unit( 
+    input                   clk,
+    input                   rst,
+    input                   display,
+
+	input 	                i_runstop,   
+    input                   i_clear,    
+    input                   i_mode,  
+    
+	output	reg	            o_runstop,
+	output	reg             o_clear,
+	output	                o_mode
+    );
+
+    reg [1:0] c_state, n_state;
+    parameter STOP = 2'b00, RUN = 2'b01, CLEAR = 2'b10, MODE = 2'b11;
+
+    reg mode_reg, mode_next; 
+    assign o_mode = mode_reg;
+
+    // state register 
+    always @(posedge clk, posedge rst) begin
+        if (rst) begin
+            c_state <= STOP;
+            mode_reg <= 1'b0; 
+        end
+        else begin
+            c_state <= n_state;
+            mode_reg <= mode_next;
+
+        end
+    end
+
+    // next, output CL
+    always @(*) begin
+        n_state = c_state;
+        mode_next = mode_reg;
+        o_runstop = 1'b0; 
+        o_clear = 1'b0;   
+        if (display) begin
+            case (c_state)
+                STOP: begin
+                    o_runstop = 1'b0; 
+                    o_clear = 1'b0;   
+                    if (i_runstop) begin
+                        n_state = RUN;
+                    end
+                    else if (i_clear) begin 
+                        n_state = CLEAR;
+                    end
+                    else if (i_mode) begin
+                        n_state = MODE;
+                    end
+                    else begin   
+                        n_state = c_state;
+                    end
+                end
+                RUN: begin
+                    o_runstop = 1'b1; 
+                    if (i_runstop) begin 
+                        n_state = STOP;
+                    end // else문은 필요없다!
+                end
+                CLEAR: begin 
+                    o_clear = 1'b1; 
+                    n_state = STOP;
+                end
+                MODE: begin 
+                    mode_next = ~mode_reg;
+                    n_state = STOP;
+                end
+            endcase
+        end
+        else begin
+            n_state = c_state;
+        end
+    end
+
+endmodule
