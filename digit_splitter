@@ -1,0 +1,25 @@
+// 26.04.17 15:37
+//1. 시계에서 분이 15에서 멈춤
+//2. 스톱워치에서 run을 누르면 바로 run 동작 안함
+//3. led 불 1,2번이 안들어옴
+//4. 시간 설정을 가서 업다운은 되는데 왼오 동작이 안됨
+//5. 왼오를 누르면 그 후에 업다운이 안됨
+//6. 스톱워치에서 다운누르고 오른쪽 누르면 07.11 , 11.03까지만 나옴 그리고 멈춤
+//7. sw[1]에 대한 시간 설정 모드 추가 x
+
+
+`timescale 1ns / 1ps
+
+module digit_splitter # (
+    parameter BIT_WIDTH = 7
+)(
+    input [BIT_WIDTH-1:0] digit_in,
+
+    output [3:0] digit_1,
+    output [3:0] digit_10
+);
+
+    assign digit_1 = digit_in % 10;
+    assign digit_10 = (digit_in / 10) % 10;
+
+endmodule
