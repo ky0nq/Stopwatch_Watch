@@ -1,8 +1,4 @@
-// 26.04.18 09:40
-//1. 시간 설정을 가서 sec 부분에서 Left, Right 동작 x
-//2. 스톱워치에서 다운 -> 로직 설계
-//3. state o_place를 4'b0으로 어디서 초기화?
-//4. 시간 설정 DP 점멸 or LED 추가
+// 26.04.18 Final code
 
 `timescale 1ns / 1ps
 
@@ -10,7 +6,11 @@ module stopwatch_datapath #(
     parameter   MSEC_WIDTH =    7,
                 SEC_WIDTH  =    6,
                 MIN_WIDTH  =    6,
-                HOUR_WIDTH =    5
+                HOUR_WIDTH =    5,
+                MSEC_SET   =    0,
+                SEC_SET    =    0,
+                MIN_SET    =    0,
+                HOUR_SET   =    8
 ) (
     input                       clk,
     input                       rst,
@@ -18,6 +18,7 @@ module stopwatch_datapath #(
     input                       i_runstop,
     input                       i_clear,
     input                       i_mode,
+    input                       i_set,
 
     output [MSEC_WIDTH-1 : 0]   msec,
     output [ SEC_WIDTH-1 : 0]   sec,
@@ -34,60 +35,81 @@ module stopwatch_datapath #(
     );
 
     wire w_sec_tick, w_min_tick, w_hour_tick;
+    wire w_sec_tick_down, w_min_tick_down, w_hour_tick_down;
+
+    wire all_zero, no_mode;
+    assign all_zero = ((msec == 0) && (sec == 0) && (min == 0) && (hour == 0));
+    
     //msec
     tick_counter #(
         .TIMES          (100), 
-        .BIT_WIDTH      (MSEC_WIDTH)
+        .BIT_WIDTH      (MSEC_WIDTH),
+        .INIT           (MSEC_SET)
     ) U_MSEC_TICK_COUNTER (
         .clk            (clk),
         .rst            (rst),
-        .i_tick         (w_tick_100hz),
+        .i_tick         (i_mode ? 1'b0 : w_tick_100hz),
+        .i_tick_down    (i_mode ? (all_zero ? 1'b0 : w_tick_100hz) : 1'b0),
         .i_clear        (i_clear),
         .i_mode         (i_mode),
+        .i_set          (i_set),
         .times_counter  (msec),
-        .o_tick         (w_sec_tick)
+        .o_tick         (w_sec_tick),
+        .o_tick_down    (w_sec_tick_down)
     );
 
     // sec
     tick_counter #(
         .TIMES          (60), 
-        .BIT_WIDTH      (SEC_WIDTH)
+        .BIT_WIDTH      (SEC_WIDTH),
+        .INIT           (SEC_SET)
     ) U_SEC_TICK_COUNTER (
         .clk            (clk),
         .rst            (rst),
         .i_tick         (w_sec_tick), // from msec o_tick
+        .i_tick_down    (all_zero ? 1'b0 : w_sec_tick_down),
         .i_clear        (i_clear),
         .i_mode         (i_mode),
+        .i_set          (i_set),
         .times_counter  (sec),
-        .o_tick         (w_min_tick)
+        .o_tick         (w_min_tick),
+        .o_tick_down    (w_min_tick_down)
     );
 
     // min
     tick_counter #(
         .TIMES          (60), 
-        .BIT_WIDTH      (MIN_WIDTH)
+        .BIT_WIDTH      (MIN_WIDTH),
+        .INIT           (MIN_SET)
     ) U_MIN_TICK_COUNTER (
         .clk            (clk),
         .rst            (rst),
         .i_tick         (w_min_tick), // from sec o_tick
+        .i_tick_down    (all_zero ? 1'b0 : w_min_tick_down),
         .i_clear        (i_clear),
         .i_mode         (i_mode),
+        .i_set          (i_set),
         .times_counter  (min),
-        .o_tick         (w_hour_tick)
+        .o_tick         (w_hour_tick),
+        .o_tick_down    (w_hour_tick_down)
     );
     
     // hour
     tick_counter #(
         .TIMES          (24), 
-        .BIT_WIDTH      (HOUR_WIDTH)
+        .BIT_WIDTH      (HOUR_WIDTH),
+        .INIT           (HOUR_SET)
     ) U_HOUR_TICK_COUNTER (
         .clk            (clk),
         .rst            (rst),
         .i_tick         (w_hour_tick), // from min o_tick
+        .i_tick_down    (all_zero ? 1'b0 : w_hour_tick_down),
         .i_clear        (i_clear),
         .i_mode         (i_mode),
+        .i_set          (i_set),
         .times_counter  (hour),
-        .o_tick         ()
+        .o_tick         (),
+        .o_tick_down    ()
     );
 
 endmodule
