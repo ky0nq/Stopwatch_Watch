@@ -1,8 +1,4 @@
-// 26.04.18 09:40
-//1. 시간 설정을 가서 sec 부분에서 Left, Right 동작 x
-//2. 스톱워치에서 다운 -> 로직 설계
-//3. state o_place를 4'b0으로 어디서 초기화?
-//4. 시간 설정 DP 점멸 or LED 추가
+// 26.04.18 Final code
 
 `timescale 1ns / 1ps
 
@@ -10,6 +6,7 @@ module top_stopwatch_watch(
     input           clk,
     input           rst,
     input   [2:0]   sw,
+    input           sw9,
     input           btnR,
     input           btnL,
     input           btnU,
@@ -17,7 +14,9 @@ module top_stopwatch_watch(
 
     output  [7:0]   fnd_data,
     output  [3:0]   fnd_com,
-    output  [2:0]   o_led
+    output  [2:0]   o_led,
+    output          o_led9,
+    output  [3:0]   o_led_wt_set
     );
     
     parameter   MSEC_WIDTH =    7,
@@ -42,7 +41,7 @@ module top_stopwatch_watch(
 
     wire    w_btnR, w_btnL, w_btnD, w_btnU;
     wire    w_btnR_wt, w_btnL_wt, w_btnD_wt, w_btnU_wt;
-    wire    w_runstop, w_clear, w_mode;
+    wire    w_runstop, w_clear, w_mode, w_set;
 
     button_debounce U_BTNR(
         .clk            (clk),
@@ -79,10 +78,12 @@ module top_stopwatch_watch(
         .display        (~sw[1]),
         .i_runstop      (w_btnR),   
         .i_clear        (w_btnL),    
-        .i_mode         (w_btnD),    
+        .i_mode         (w_btnD),
+        .i_set          (w_btnU),   
         .o_runstop      (w_runstop),
         .o_clear        (w_clear),
-        .o_mode         (w_mode)
+        .o_mode         (w_mode),
+        .o_set          (w_set)   
     );
 
     stopwatch_datapath  #(
@@ -96,6 +97,7 @@ module top_stopwatch_watch(
         .i_runstop      (w_runstop),
         .i_clear        (w_clear),
         .i_mode         (w_mode),
+        .i_set          (w_set),    
         .msec           (w_msec),
         .sec            (w_sec),
         .min            (w_min),
@@ -104,7 +106,6 @@ module top_stopwatch_watch(
 
     // watch
     wire [3:0] w_place;
-
     control_unit_watch U_CNT_WATCH ( 
         .clk            (clk),
         .rst            (rst),
@@ -113,7 +114,8 @@ module top_stopwatch_watch(
         .i_right        (w_btnR),    
         .sw             (sw), 
         .o_place        (w_place),
-        .o_led          (o_led[2:1])
+        .o_led          (o_led[2:1]),
+        .o_led_wt_set   (o_led_wt_set)
         );
 
     watch_datapath # (
@@ -124,7 +126,7 @@ module top_stopwatch_watch(
     ) U_WATCH_DATAPATH(
         .clk            (clk),
         .rst            (rst),
-        .sw             (sw[2]),
+        .sw             (sw[2] & sw[1]),
         .place          (w_place),
         .i_up           (w_btnU),
         .i_down         (w_btnD),
@@ -150,7 +152,7 @@ module top_stopwatch_watch(
         .in0(w_sec),
         .in1(w_sec_wt),
         .sel(sw[1]),
-        .out_mux(w_fnd_sec)
+        .out_mux(w_fnd_sec)  
     );
 
     mux_2x1 #(
@@ -174,14 +176,17 @@ module top_stopwatch_watch(
     fnd_controller U_FND_CNTL (
         .clk            (clk),
         .rst            (rst),
-        .sw             (sw[0]), 
+        .sw             (sw[0]),
+        .sw1            (sw[1]),
+        .sw9            (sw9),
         .msec           (w_fnd_msec),
         .sec            (w_fnd_sec),
         .min            (w_fnd_min),
         .hour           (w_fnd_hour),
         .fnd_com        (fnd_com),
         .fnd_data       (fnd_data),
-        .o_led          (o_led[0])
+        .o_led          (o_led[0]),
+        .o_led9         (o_led9)
     );
 
 endmodule
