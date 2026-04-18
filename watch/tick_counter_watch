@@ -1,4 +1,4 @@
-// 26.04.18 09:40
+// 26.04.18 11:25 - 시계 12시 초기값 추가
 //1. 시간 설정을 가서 sec 부분에서 Left, Right 동작 x
 //2. 스톱워치에서 다운 -> 로직 설계
 //3. state o_place를 4'b0으로 어디서 초기화?
@@ -8,7 +8,8 @@
 
 module tick_counter_watch #(
     parameter   TIMES = 100,
-                BIT_WIDTH = 7
+                BIT_WIDTH = 7,
+                INIT = 0
 ) (
     input                        clk,
     input                        rst,
@@ -29,7 +30,7 @@ module tick_counter_watch #(
 
     always @(posedge clk, posedge rst) begin
         if (rst) begin
-            counter_reg <= 0;
+            counter_reg <= INIT;
         end else begin
             counter_reg <= counter_next;
         end
