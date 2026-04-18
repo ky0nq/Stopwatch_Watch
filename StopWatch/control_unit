@@ -1,8 +1,4 @@
-// 26.04.18 09:40
-//1. 시간 설정을 가서 sec 부분에서 Left, Right 동작 x
-//2. 스톱워치에서 다운 -> 로직 설계
-//3. state o_place를 4'b0으로 어디서 초기화?
-//4. 시간 설정 DP 점멸 or LED 추가
+// 26.04.18 Final code
 
 `timescale 1ns / 1ps
 module control_unit( 
@@ -13,10 +9,12 @@ module control_unit(
 	input 	                i_runstop,   
     input                   i_clear,    
     input                   i_mode,  
+    input                   i_set,
     
 	output	reg	            o_runstop,
 	output	reg             o_clear,
-	output	                o_mode
+	output	                o_mode,
+    output  reg             o_set
     );
 
     reg [1:0] c_state, n_state;
@@ -43,7 +41,8 @@ module control_unit(
         n_state = c_state;
         mode_next = mode_reg;
         o_runstop = 1'b0; 
-        o_clear = 1'b0;   
+        o_clear = 1'b0;  
+        o_set = 1'b0; 
         if (display) begin
             case (c_state)
                 STOP: begin
@@ -57,6 +56,10 @@ module control_unit(
                     end
                     else if (i_mode) begin
                         n_state = MODE;
+                    end
+                    else if (i_set) begin
+                        n_state = c_state;
+                        o_set = 1'b1;
                     end
                     else begin   
                         n_state = c_state;
