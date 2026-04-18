@@ -1,4 +1,4 @@
-// 26.04.18 Final code
+// 26.04.18 22:06 Final code _ optimize 
 
 `timescale 1ns / 1ps
 
@@ -17,7 +17,7 @@ module tick_counter_watch #(
     input                        i_down,
 
     output     [BIT_WIDTH - 1:0] times_counter,
-    output reg                   o_tick
+    output reg                   o_tick // 다음 시간 단위로 +1 알려주기 위한 output
 );
 
     //counter register SL
@@ -47,22 +47,22 @@ module tick_counter_watch #(
             end
         end 
         else begin // 설정 모드
-            if (place) begin
-                if (i_up) begin
+            if (place) begin // control_unit_watch에서 받은 위치 정보가 존재하면
+                if (i_up) begin // up
                     counter_next = counter_reg + 1;
                     if (counter_reg == (TIMES - 1)) begin
                         counter_next = 0;
                         o_tick = 1'b0;
                     end
                 end
-                else if (i_down) begin
+                else if (i_down) begin // down
                     counter_next = counter_reg - 1;
                     if (counter_reg == 0) begin
                         counter_next = TIMES - 1;
                         o_tick = 1'b0;
                     end
                 end
-                else begin
+                else begin // 아무것도 안 하면 유지
                     counter_next = counter_reg;
                     o_tick = 1'b0;
                 end 
