@@ -1,12 +1,8 @@
-// 26.04.18 09:40
-//1. 시간 설정을 가서 sec 부분에서 Left, Right 동작 x
-//2. 스톱워치에서 다운 -> 로직 설계
-//3. state o_place를 4'b0으로 어디서 초기화?
-//4. 시간 설정 DP 점멸 or LED 추가
+// 26.04.18 Final code
 
 `timescale 1ns / 1ps
-
-module control_unit_watch (
+// 시계할 때 복잡하면 control unit 분리해서 2개로 설계
+module control_unit_watch ( // moore machine
     input                   clk,
     input                   rst,
     input                   display, // sw[1]
@@ -17,55 +13,52 @@ module control_unit_watch (
     input       [2:0]       sw,
 	 
     output  reg [3:0]       o_place,
-    output      [1:0]       o_led 
-    );
+    output      [1:0]       o_led,
+    output      [3:0]       o_led_wt_set
+        );
 
-    reg [2:0] c_state, n_state, prev_state;
-    parameter RUN = 3'b000, SET = 3'b001, HOUR = 3'b010, MIN = 3'b011, SEC = 3'b100, MSEC = 3'b101;
+    reg [2:0] c_state, n_state;
+    parameter RUN = 3'b000, HOUR = 3'b001, MIN = 3'b010, SEC = 3'b011, MSEC = 3'b100;
 
     assign o_led[0] = sw[1]; 
     assign o_led[1] = sw[2]; 
 
+     // LED 설정
+    assign o_led_wt_set = ((sw == 3'b110) && (o_place == 4'b0001)) ? 4'b0011 : 
+                            ((sw == 3'b110) && (o_place == 4'b0010)) ? 4'b1100 :
+                                ((sw == 3'b111) && (o_place == 4'b0100)) ? 4'b0011 :
+                                    ((sw == 3'b111) && (o_place == 4'b1000)) ? 4'b1100 : 4'b0000;
+                                    
     // state register 
     always @(posedge clk, posedge rst) begin
         if (rst) begin
             c_state <= RUN;
-            prev_state <= RUN;
         end
         else begin
             c_state <= n_state;
-            prev_state <= c_state;
         end
     end
 
     // next, output CL
     always @(*) begin
-        n_state = c_state; // 질문~ : 어디서 초기화 해야해?
+        n_state = c_state; 
         o_place = 4'b0000;
         if (display) begin // 버튼 공유하고 있으니까 watch를 보고 있을 때만 버튼을 반영
             case (c_state)
                 RUN : begin
-                    o_place  = 4'b0000; /*nk*/
-
+                    o_place  = 4'b0000; 
                     if (sw[1] & sw[2]) begin // 시계 - 설정모드
-                        n_state = SET;
+                        n_state = HOUR;
+                        o_place = 4'b1000;
                     end 
                     else begin // 시계 - 시간
                         n_state = c_state;
                     end
                 end
-                SET: begin
-                    o_place  = 4'b1000; /*nk*/
-                    if ((!sw[1]) | (!sw[2])) begin // 시계 - 시간 or 스톱워치 - (시계 - 설정)
-                       n_state = RUN; 
-                    end 
-                    else begin
-                        n_state = HOUR; 
-                    end
-                end
                 HOUR: begin
                     if ((!sw[1]) | (!sw[2])) begin
                         n_state = RUN;
+                        o_place  = 4'b0000; 
                     end
                     else if (i_left) begin 
                         n_state = MSEC;
@@ -83,6 +76,7 @@ module control_unit_watch (
                 MIN: begin
                     if ((!sw[1]) | (!sw[2])) begin
                         n_state = RUN;
+                        o_place  = 4'b0000; 
                     end
                     else if (i_left) begin 
                         n_state = HOUR;
@@ -100,6 +94,7 @@ module control_unit_watch (
                 SEC: begin
                     if ((!sw[1]) | (!sw[2])) begin
                         n_state = RUN;
+                        o_place  = 4'b0000; 
                     end
                     else if (i_left) begin 
                         n_state = MIN;
@@ -108,7 +103,8 @@ module control_unit_watch (
                     else if (i_right) begin
                         n_state = MSEC;
                         o_place = 4'b0001;
-                    end begin          
+                    end 
+                    else begin          
                         n_state = c_state;
                         o_place = 4'b0010;
                     end
@@ -116,6 +112,7 @@ module control_unit_watch (
                 MSEC: begin
                     if ((!sw[1]) | (!sw[2])) begin
                         n_state = RUN;
+                        o_place  = 4'b0000; 
                     end
                     else if (i_left) begin 
                         n_state = SEC;
@@ -134,6 +131,7 @@ module control_unit_watch (
         end
         else begin
             n_state = c_state;
+            o_place  = 4'b0000; 
         end
     end
 endmodule
