@@ -1,29 +1,31 @@
-// 26.04.18 Final code
+// 26.04.18 22:06 Final code _ optimize 
 
 `timescale 1ns / 1ps
-// 시계할 때 복잡하면 control unit 분리해서 2개로 설계
-module control_unit_watch ( // moore machine
+
+module control_unit_watch ( 
     input                   clk,
     input                   rst,
-    input                   display, // sw[1]
+    input                   display, // 현재 어떤 모드를 보여주고 있는지 sw[1] 연결
+                                     // display = 0 : stopwatch , display = 1 : watch
 
 	input 	                i_left,   
     input                   i_right,    
 
     input       [2:0]       sw,
 	 
-    output  reg [3:0]       o_place,
-    output      [1:0]       o_led,
-    output      [3:0]       o_led_wt_set
+    output  reg [3:0]       o_place, // 시계 - 설정 모드일 때 tick_counter 에 어떤 시간 단위 (위치)를 변경할건지 알려주기 위한 위치 정보
+    output                  o_led2,
+    output                  o_led1,
+    output      [3:0]       o_led_wt_set // 시계 설정 모드 중 현재 위치 표시를 위한 LED
         );
 
     reg [2:0] c_state, n_state;
     parameter RUN = 3'b000, HOUR = 3'b001, MIN = 3'b010, SEC = 3'b011, MSEC = 3'b100;
 
-    assign o_led[0] = sw[1]; 
-    assign o_led[1] = sw[2]; 
+    assign o_led1 = sw[1]; 
+    assign o_led2 = sw[2]; 
 
-     // LED 설정
+     // 시계 설정 모드에서 설정 위치 표시
     assign o_led_wt_set = ((sw == 3'b110) && (o_place == 4'b0001)) ? 4'b0011 : 
                             ((sw == 3'b110) && (o_place == 4'b0010)) ? 4'b1100 :
                                 ((sw == 3'b111) && (o_place == 4'b0100)) ? 4'b0011 :
@@ -56,8 +58,9 @@ module control_unit_watch ( // moore machine
                     end
                 end
                 HOUR: begin
-                    if ((!sw[1]) | (!sw[2])) begin
-                        n_state = RUN;
+                    // 시계 - 시간모드 or 시계 - 설정 모드 이지만 stopwatch로 넘어갔을 때
+                    if ((!sw[1]) | (!sw[2])) begin 
+                        n_state = RUN; // 설정하고 있다가 스톱워치가도 우리는 시간을 고정안하고 흐르게 한다
                         o_place  = 4'b0000; 
                     end
                     else if (i_left) begin 
@@ -129,7 +132,7 @@ module control_unit_watch ( // moore machine
                 end
             endcase
         end
-        else begin
+        else begin // 스톱워치 모드일 때 계속 실행되도록
             n_state = c_state;
             o_place  = 4'b0000; 
         end
