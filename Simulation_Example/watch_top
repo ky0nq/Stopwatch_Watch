@@ -1,0 +1,57 @@
+`timescale 1ns / 1ps
+
+module watch_top(
+    input           clk,
+    input           rst,
+    input   [2:0]   sw,
+    input           btnR,
+    input           btnL,
+    input           btnU,
+    input           btnD,
+
+    output  [6:0]   msec_wt,
+    output  [5:0]   sec_wt,
+    output  [5:0]   min_wt,
+    output  [4:0]   hour_wt
+    );
+    parameter   MSEC_WIDTH =    7,
+                SEC_WIDTH  =    6,
+                MIN_WIDTH  =    6,
+                HOUR_WIDTH =    5;
+
+    wire    w_down, w_up;
+    wire [3:0] w_place;
+
+    control_unit_watch U_CNT_WATCH ( 
+        .clk            (clk),
+        .rst            (rst),
+        .display        (sw[1]),
+        .i_left         (btnL),   
+        .i_right        (btnR),    
+        .i_down         (btnD),  
+        .i_up           (btnU), 
+        .sw             (sw),
+        .o_down         (w_down),  
+        .o_up           (w_up), 
+        .o_place        (w_place)
+        );
+
+    watch_datapath # (
+        .MSEC_WIDTH (MSEC_WIDTH),
+        .SEC_WIDTH  (SEC_WIDTH),
+        .MIN_WIDTH  (MIN_WIDTH),
+        .HOUR_WIDTH (HOUR_WIDTH)
+    ) U_WATCH_DATAPATH (
+        .clk            (clk),
+        .rst            (rst),
+        .sw             (sw[2]),
+        .place          (w_place),
+        .i_up           (w_up),
+        .i_down         (w_down),
+        .msec           (msec_wt),
+        .sec            (sec_wt),
+        .min            (min_wt),
+        .hour           (hour_wt)
+    );
+    
+endmodule
