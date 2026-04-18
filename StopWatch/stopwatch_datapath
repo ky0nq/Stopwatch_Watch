@@ -71,7 +71,7 @@ module stopwatch_datapath #(
     ) U_SEC_TICK_COUNTER (
         .clk            (clk),
         .rst            (rst),
-        .i_tick         (w_sec_tick_up), // from msec o_tick_up
+        .i_tick_up      (w_sec_tick_up), // from msec o_tick_up
         .i_tick_down    (all_zero ? 1'b0 : w_sec_tick_down),
         .i_clear        (i_clear),
         .i_mode         (i_mode),
