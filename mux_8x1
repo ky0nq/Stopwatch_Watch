@@ -1,4 +1,4 @@
-// 26.04.18 Final code
+// 26.04.18 22:06 Final code _ optimize 
 
 `timescale 1ns / 1ps
 
@@ -9,7 +9,7 @@ module mux_8x1 (
     input [3:0] in3,
     input [3:0] in4,
     input [3:0] in5,
-    input [3:0] in6, 
+    input [3:0] in6,
     input [3:0] in7, 
     input [2:0] sel,
 
@@ -21,7 +21,7 @@ module mux_8x1 (
     assign out_mux = out_reg;
 
     always @(*) begin
-        case (sel)
+        case (sel) //sel 은 counter_8에서 나온 output
             3'b000:   out_reg = in0;
             3'b001:   out_reg = in1;
             3'b010:   out_reg = in2;
