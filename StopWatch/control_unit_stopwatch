@@ -4,7 +4,7 @@
 module control_unit_stopwatch( 
     input                   clk,
     input                   rst,
-    input                   display, // 현재 어떤 모드를 보여주고 있는지 
+    input                   display, // 현재 어떤 모드를 보여주고 있는지 sw[1] 연결
                                      // display = 0 : stopwatch , display = 1 : watch
 
     // 기능 별 FSM 설계 input/output
