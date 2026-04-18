@@ -1,8 +1,8 @@
-// 26.04.18 Final code
+// 26.04.18 22:06 Final code _ optimize 
 
 `timescale 1ns / 1ps
 
-module tick_gen_100hz (
+module tick_gen_100hz_stopwatch (
     input       clk,
     input       rst,
 
@@ -12,7 +12,7 @@ module tick_gen_100hz (
     output reg  o_tick_100hz
 );
     // 100Hz counter number * 1000 for simulation
-    parameter F_COUNT = 100_000_000 / 100;
+    parameter F_COUNT = 100_000_000 / 100_000; // 이게 시뮬레이션 전용 값 (FPGA에는 100으로 올렸었어)
     reg [$clog2(F_COUNT)-1:0] counter_reg;  
 
     always @(posedge clk, posedge rst) begin
