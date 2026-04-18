@@ -62,8 +62,7 @@ module tick_counter_stopwatch #(
                 end
             end
         end
-        // clear에 대해서 가장 우선순위를 두려고 우리는 했다고 해야할 거 같음
-        // 기존 수업 때는 run이 우선이었던 거로 갑자기 설명적다가 기억나서.. (더 알아보고 알려줘!)
+
         if (i_clear) begin
             counter_next = 0;
         end        
