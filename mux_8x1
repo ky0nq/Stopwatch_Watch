@@ -9,7 +9,7 @@ module mux_8x1 (
     input [3:0] in3,
     input [3:0] in4,
     input [3:0] in5,
-    input [3:0] in6,
+    input [3:0] in6, 
     input [3:0] in7, 
     input [2:0] sel,
 
