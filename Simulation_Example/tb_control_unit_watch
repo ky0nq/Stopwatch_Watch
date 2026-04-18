@@ -1,0 +1,71 @@
+`timescale 1ns / 1ps
+
+module tb_control_unit_watch();
+
+        reg             clk         ;
+        reg             rst         ;
+        reg             display     ;
+        reg             i_left      ;   
+        reg             i_right     ;    
+        reg             i_down      ; 
+        reg             i_up        ; 
+        reg [2:0]       sw          ;
+        
+        wire            o_down      ;
+        wire            o_up        ;
+        wire [3:0]      o_place     ;
+        wire [1:0]      o_led       ; 
+
+    control_unit_watch dut( 
+        .clk          (   clk         )     ,
+        .rst          (   rst         )     ,
+        .display      (   display     )     ,
+        .i_left       (   i_left      )     ,  
+        .i_right      (   i_right     )     ,   
+        .i_down       (   i_down      )     ,
+        .i_up         (   i_up        )     ,
+        .sw           (   sw          )     ,
+        .o_down       (   o_down      )     ,
+        .o_up         (   o_up        )     ,
+        .o_place      (   o_place     )     ,
+        .o_led        (   o_led       )     
+    );
+
+    always #5 clk = ~clk;
+
+    initial begin
+        clk = 0;
+        sw = 3'b000;
+        rst = 1'b1;
+
+        clk            = 0; 
+        rst            = 1; 
+        display        = 0; 
+        i_left         = 0;      
+        i_right        = 0;      
+        i_down         = 0; 
+        i_up           = 0;   
+        sw             = 3'b0; 
+        
+        #20;
+        rst = 1'b0;
+        display = 1'b1; // 시계 
+
+        @(posedge clk);
+        
+        // a -> b 
+        i_up = 1;
+        sw = 3'b111;
+        @(posedge clk);
+        @(posedge clk);
+
+        i_up = 0;
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+
+        $stop;
+
+    end
+endmodule
