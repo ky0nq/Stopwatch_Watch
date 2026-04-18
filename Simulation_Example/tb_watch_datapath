@@ -1,0 +1,76 @@
+`timescale 1ns / 1ps
+
+module tb_watch_datapath( );
+    parameter SEC_DELAY = 1_000_000; // 10us -> 100_000 
+    parameter MIN_DELAY = 60_000_000;
+
+    reg         clk;
+    reg         rst;
+    reg  [2:0]  sw;
+    reg  [3:0]  place;
+    reg         i_up;
+    reg         i_down;
+    wire [6:0]  msec;
+    wire [5:0]  sec;
+    wire [5:0]  min;
+    wire [4:0]  hour;
+
+watch_datapath #(
+    .MSEC_WIDTH(7),
+    .SEC_WIDTH (6),
+    .MIN_WIDTH (6),
+    .HOUR_WIDTH(5)
+) dut(
+   .clk         (clk),
+   .rst         (rst),
+   .sw          (sw),
+   .place       (place),
+   .i_up        (i_up),
+   .i_down      (i_down),
+   .msec        (msec),
+   .sec         (sec),
+   .min         (min),
+   .hour        (hour)
+);
+
+always #5 clk = ~clk;
+
+initial begin
+    clk = 0;
+    rst = 1;
+    sw = 3'b000;
+    place = 4'b0000;
+
+    i_up   = 0;
+    i_down     = 0;
+    @(negedge clk);
+    @(negedge clk);
+    @(negedge clk);
+    rst = 0;
+    @(negedge clk);
+    @(negedge clk);
+    sw = 3'b111;
+    i_up   = 1;
+    sw = 3'b111;
+    place = 4'b1000;
+    repeat (10) #(SEC_DELAY);
+    //repeat (10_000_000) @(negedge clk);
+    i_up   = 0;
+    @(negedge clk);
+    @(negedge clk);
+    @(negedge clk);
+    @(negedge clk);
+    @(negedge clk);
+    @(negedge clk);
+    @(negedge clk);
+    @(negedge clk);
+    @(negedge clk);
+
+    #(SEC_DELAY);
+
+    #(MIN_DELAY);
+
+    $stop;
+end
+
+endmodule
