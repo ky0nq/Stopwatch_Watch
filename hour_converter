@@ -1,0 +1,31 @@
+// 26.04.18 Final code
+
+`timescale 1ns / 1ps
+
+module hour_converter #(
+    parameter HOUR_WIDTH = 5
+) (
+    input  [3:0]            hour_digit_1,
+    input  [3:0]            hour_digit_10,
+    input  [HOUR_WIDTH-1:0] hour,
+    input                   sw9,
+    input                   sw1,
+
+    output [3:0]            o_hour_digit_1,
+    output [3:0]            o_hour_digit_10,
+    output                  o_pm_led
+);
+    wire [HOUR_WIDTH-1:0] w_hour_12;
+    wire [HOUR_WIDTH-1:0] w_hour_disp;
+    
+    assign o_pm_led      = sw9 && sw1 && (hour >= 5'd12) && (hour != 5'd0);
+    assign w_hour_12 = (hour == 5'd0)  ? 5'd12 :
+                       (hour <= 5'd12) ? hour   :
+                                         hour - 5'd12;
+
+    assign w_hour_disp = (sw9 && sw1) ? w_hour_12 : hour;
+
+    assign o_hour_digit_1  = w_hour_disp % 10;
+    assign o_hour_digit_10 = w_hour_disp / 10;
+
+endmodule
