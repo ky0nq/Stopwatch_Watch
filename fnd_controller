@@ -1,8 +1,4 @@
-// 26.04.18 09:40
-//1. 시간 설정을 가서 sec 부분에서 Left, Right 동작 x
-//2. 스톱워치에서 다운 -> 로직 설계
-//3. state o_place를 4'b0으로 어디서 초기화?
-//4. 시간 설정 DP 점멸 or LED 추가
+// 26.04.18 Final code
 
 `timescale 1ns / 1ps
 
@@ -15,6 +11,8 @@ module fnd_controller #(
     input 		                clk,
     input                       rst,
     input                       sw, //sw[0], 0: msec_sec, 1:min_hour
+    input                       sw1,
+    input                       sw9,
     input   [MSEC_WIDTH-1 : 0]  msec,
     input   [ SEC_WIDTH-1 : 0]  sec,
     input   [ MIN_WIDTH-1 : 0]  min,
@@ -22,12 +20,14 @@ module fnd_controller #(
 
     output 	[3:0] 	            fnd_com,
     output 	[7:0] 	            fnd_data,
-    output                      o_led
+    output                      o_led,
+    output                      o_led9
 );
     wire 	[3:0] 	            w_msec_digit_1, w_msec_digit_10;
     wire 	[3:0] 	            w_sec_digit_1, w_sec_digit_10;
     wire 	[3:0] 	            w_min_digit_1, w_min_digit_10;
     wire 	[3:0] 	            w_hour_digit_1, w_hour_digit_10;
+    wire 	[3:0] 	            w_hour_digit_1_out, w_hour_digit_10_out;
     wire 	[2:0] 	            w_digit_sel;
     wire 	[3:0] 	            w_out_mux_msec_sec, w_out_mux_min_hour, w_out_mux;
     wire 		                w_1khz; 
@@ -87,6 +87,19 @@ module fnd_controller #(
         .digit_10    (w_hour_digit_10)
     );
 
+    hour_converter #(
+        .HOUR_WIDTH(HOUR_WIDTH)
+    ) U_HOUR_CONV (
+        .hour_digit_1       (w_hour_digit_1),
+        .hour_digit_10      (w_hour_digit_10),
+        .hour               (hour),
+        .sw9                (sw9),
+        .sw1                (sw1),
+        .o_hour_digit_1     (w_hour_digit_1_out),
+        .o_hour_digit_10    (w_hour_digit_10_out),
+        .o_pm_led           (o_led9)
+    );
+
     // -----
 
     comparator # (
@@ -112,8 +125,8 @@ module fnd_controller #(
     mux_8x1 U_MUX_MIN_HOUR (
         .in0		(w_min_digit_1),
         .in1		(w_min_digit_10),
-        .in2		(w_hour_digit_1),
-        .in3		(w_hour_digit_10),
+        .in2		(w_hour_digit_1_out),
+        .in3		(w_hour_digit_10_out),
         .in4		(4'hF),
         .in5		(4'hF),
         .in6		({3'b111, w_dot_onff}),
