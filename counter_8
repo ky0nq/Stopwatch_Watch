@@ -1,4 +1,4 @@
-// 26.04.18 Final code
+// 26.04.18 22:06 Final code _ optimize 
 
 ` timescale 1ns / 1ps
 
@@ -6,9 +6,9 @@ module counter_8 (
 	input 		clk,
 	input 		rst,
 	
-	output 	[2:0] 	digit_sel
+	output 	[2:0] 	digit_sel // 125hz 마다 어떤 값을 보여줄지 선택하는 selection signal
 	);
-
+	// 왜 125hz냐? 앞에서 연결된 module이 clk_div_1khz인데 그거를 8개가 나눠가지므로
 	reg [2:0] counter_reg;
 	
 	assign digit_sel = counter_reg;
@@ -18,7 +18,7 @@ module counter_8 (
 			counter_reg <= 3'b0;
 		end 
 		else begin
-			counter_reg <= counter_reg + 1;
+			counter_reg <= counter_reg + 1; // 125hz마다 이제 출력 위치를 바꿔줘야 하니까 +1
 		end
 	end
 
