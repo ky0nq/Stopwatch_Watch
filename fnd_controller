@@ -101,7 +101,7 @@ module fnd_controller #(
         .sw1                (sw1),
         .o_hour_digit_1     (w_hour_digit_1_out),
         .o_hour_digit_10    (w_hour_digit_10_out),
-        .o_pm_led           (o_led9)
+        .o_led9_pm           (o_led9)
     );
 
     // -----
