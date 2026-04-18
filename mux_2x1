@@ -3,6 +3,7 @@
 //2. 스톱워치에서 다운 -> 로직 설계
 //3. state o_place를 4'b0으로 어디서 초기화?
 //4. 시간 설정 DP 점멸 or LED 추가
+
 `timescale 1ns / 1ps
 module mux_2x1 # (
     parameter BIT_WIDTH = 4
