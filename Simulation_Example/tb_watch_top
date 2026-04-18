@@ -1,0 +1,75 @@
+`timescale 1ns / 1ps
+
+module tb_watch_top();
+
+    reg           clk;
+    reg           rst;
+    reg   [2:0]   sw;
+    reg           btnR;
+    reg           btnL;
+    reg           btnU;
+    reg           btnD;
+
+    wire  [6:0]   msec_wt;
+    wire  [5:0]   sec_wt;
+    wire  [5:0]   min_wt;
+    wire  [4:0]   hour_wt;
+    
+    parameter SEC_DELAY = 1_000_000;
+
+    watch_top dut(
+    .clk         (  clk     ) ,
+    .rst         (  rst     ) ,
+    .sw          (  sw      ) ,
+    .btnR        (  btnR    ) ,
+    .btnL        (  btnL    ) ,
+    .btnU        (  btnU    ) ,
+    .btnD        (  btnD    ) ,
+    .msec_wt     (  msec_wt ) ,
+    .sec_wt      (  sec_wt  ) ,
+    .min_wt      (  min_wt  ) ,
+    .hour_wt     (  hour_wt )
+    );
+
+    always #5 clk = ~clk;
+
+    initial begin
+    clk = 0;
+    rst = 1;
+    sw = 3'b000;
+
+    btnR   = 0;
+    btnL   = 0;
+    btnU   = 0;
+    btnD   = 0;
+
+    @(negedge clk);
+    @(negedge clk);
+    @(negedge clk);
+    rst = 0;
+    @(negedge clk);
+    @(negedge clk);
+    sw = 3'b111;
+    btnU   = 1;
+
+    repeat (10) #(SEC_DELAY);
+    //repeat (10_000_000) @(negedge clk);
+    btnU   = 0;
+    @(negedge clk);
+    @(negedge clk);
+    @(negedge clk);
+    @(negedge clk);
+    @(negedge clk);
+    @(negedge clk);
+    @(negedge clk);
+    @(negedge clk);
+    @(negedge clk);
+
+    #(SEC_DELAY);
+
+
+    $stop;
+end
+
+
+endmodule
