@@ -43,6 +43,8 @@ module top_stopwatch_watch(
     wire    w_btnR_wt, w_btnL_wt, w_btnD_wt, w_btnU_wt;
     wire    w_runstop, w_clear, w_mode, w_set;
 
+    // 시계 설정 모드를 위한 위치 정보
+    wire [3:0] w_place;
     button_debounce U_BTNR(
         .clk            (clk),
         .rst            (rst),
@@ -104,8 +106,6 @@ module top_stopwatch_watch(
         .hour           (w_hour)
     );
 
-    // watch
-    wire [3:0] w_place;
     control_unit_watch U_CNT_WATCH ( 
         .clk            (clk),
         .rst            (rst),
@@ -138,7 +138,7 @@ module top_stopwatch_watch(
         .hour           (w_hour_wt)
     );
     
-
+    // sw[1] 에 따라 FND로 stopwatch를 보여줄지 watch를 보여줄지 결정하는 mux 4개
     mux_2x1 #(
         .BIT_WIDTH(MSEC_WIDTH)
     ) U_MUX_MSEC_FND (
