@@ -11,7 +11,7 @@ module tick_counter_watch #(
     input                        rst,
     input                        i_tick,
     
-    input                        sw, //sw1
+    //input                        sw1, <<확인해보기>>
     input                        place,
     input                        i_up,
     input                        i_down,
