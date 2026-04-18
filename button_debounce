@@ -1,4 +1,4 @@
-// 26.04.18 Final code
+// 26.04.18 22:06 Final code _ optimize 
 
 `timescale 1ns / 1ps
 
@@ -9,7 +9,7 @@ module button_debounce (
     output o_Btn
 );
     // clock divider
-    // 100Mhz -> 100KHz
+    // 100Mhz -> 100KHz : 10us 마다 샘플링을 하기 위해 주파수 낮춤
     parameter F_COUNT = 100_000_000 / 100_000;
     reg [$clog2(F_COUNT)-1:0] r_counter;
     reg clk_100khz;
@@ -29,6 +29,8 @@ module button_debounce (
         end
     end
 
+    // 이거 왜 하냐? 채터링 제거를 위해서 
+
     // synchronizer 
     reg [7:0] sync_reg, sync_next;
     wire w_debounce;
@@ -44,10 +46,9 @@ module button_debounce (
 
     always @(*) begin  // shift 역할
         sync_next = {i_Btn, sync_reg[7:1]};
-        // sync_next = {sync_reg[6:0], i_Btn};
-        // << 로 해도 됨
     end
 
+    // 80us 동안은 button의 input이 1이 들어와야 w_debounce = 1
     assign w_debounce = &sync_reg;
 
     // rising edge detect
@@ -59,6 +60,13 @@ module button_debounce (
         end
     end
 
+    // 아래 이 구문은 왜 하는가? 1 pulse로 출력을 내기 위해서 찾는 거
     assign o_Btn = w_debounce & ~(edge_reg);
+    /*
+        w_debounce : 0 0 1 1 1 1
+        edge_reg   : 0 0 0 1 1 1 
+        ~edge_reg  : 1 1 1 0 0 0
+        o_Btn      : 0 0 1 0 0 0 // 이런 동작을 위해서 
+    */
 
 endmodule
