@@ -1,8 +1,8 @@
-// 26.04.17 19:17
-//1. led 불 1,2번이 안들어옴
-//2. 시간 설정을 가서 업다운, 왼오 동작이 안됨
-//3. 스톱워치에서 다운 -> 로직 설계
-//4. 시간 설정 모드에서 DP 켜거나 LED
+// 26.04.18 09:40
+//1. 시간 설정을 가서 sec 부분에서 Left, Right 동작 x
+//2. 스톱워치에서 다운 -> 로직 설계
+//3. state o_place를 4'b0으로 어디서 초기화?
+//4. 시간 설정 DP 점멸 or LED 추가
 
 `timescale 1ns / 1ps
 
@@ -103,7 +103,6 @@ module top_stopwatch_watch(
     );
 
     // watch
-    wire w_down, w_up, w_left, w_right;
     wire [3:0] w_place;
 
     control_unit_watch U_CNT_WATCH ( 
@@ -112,11 +111,7 @@ module top_stopwatch_watch(
         .display        (sw[1]),
         .i_left         (w_btnL),   
         .i_right        (w_btnR),    
-        .i_down         (w_btnD),  
-        .i_up           (w_btnU), 
-        .sw             (sw[2]),
-        .o_down         (w_down),  
-        .o_up           (w_up), 
+        .sw             (sw), 
         .o_place        (w_place),
         .o_led          (o_led[2:1])
         );
@@ -131,8 +126,8 @@ module top_stopwatch_watch(
         .rst            (rst),
         .sw             (sw[2]),
         .place          (w_place),
-        .i_up           (w_up),
-        .i_down         (w_down),
+        .i_up           (w_btnU),
+        .i_down         (w_btnD),
         .msec           (w_msec_wt),
         .sec            (w_sec_wt),
         .min            (w_min_wt),
