@@ -1,4 +1,4 @@
-// 26.04.18 Final code
+// 26.04.18 22:06 Final code _ optimize 
 
 `timescale 1ns / 1ps
 
@@ -72,7 +72,7 @@ module top_stopwatch_watch(
     );
 
     // stopwatch
-    control_unit U_CONTROL_UNIT (
+    control_unit_stopwatch U_CONTROL_UNIT (
         .clk            (clk),
         .rst            (rst),
         .display        (~sw[1]),
@@ -114,7 +114,8 @@ module top_stopwatch_watch(
         .i_right        (w_btnR),    
         .sw             (sw), 
         .o_place        (w_place),
-        .o_led          (o_led[2:1]),
+        .o_led2         (o_led[2]),
+        .o_led1         (o_led[1]),
         .o_led_wt_set   (o_led_wt_set)
         );
 
@@ -126,7 +127,8 @@ module top_stopwatch_watch(
     ) U_WATCH_DATAPATH(
         .clk            (clk),
         .rst            (rst),
-        .sw             (sw[2] & sw[1]),
+        //.sw1            (sw[1]),
+        .sw2_and_1      (sw[2] & sw[1]),
         .place          (w_place),
         .i_up           (w_btnU),
         .i_down         (w_btnD),
@@ -176,7 +178,7 @@ module top_stopwatch_watch(
     fnd_controller U_FND_CNTL (
         .clk            (clk),
         .rst            (rst),
-        .sw             (sw[0]),
+        .sw0            (sw[0]),
         .sw1            (sw[1]),
         .sw9            (sw9),
         .msec           (w_fnd_msec),
@@ -185,7 +187,7 @@ module top_stopwatch_watch(
         .hour           (w_fnd_hour),
         .fnd_com        (fnd_com),
         .fnd_data       (fnd_data),
-        .o_led          (o_led[0]),
+        .o_led0         (o_led[0]),
         .o_led9         (o_led9)
     );
 
