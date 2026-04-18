@@ -1,4 +1,4 @@
-// 26.04.18 09:40
+// 26.04.18 11:25 - 시계 12시 초기값 추가
 //1. 시간 설정을 가서 sec 부분에서 Left, Right 동작 x
 //2. 스톱워치에서 다운 -> 로직 설계
 //3. state o_place를 4'b0으로 어디서 초기화?
@@ -10,7 +10,11 @@ module watch_datapath #(
     parameter   MSEC_WIDTH =    7,
                 SEC_WIDTH  =    6,
                 MIN_WIDTH  =    6,
-                HOUR_WIDTH =    5
+                HOUR_WIDTH =    5,
+                MSEC_INIT =     0,
+                SEC_INIT  =     0,
+                MIN_INIT  =     0,
+                HOUR_INIT =     12
 ) (
     input                       clk,
     input                       rst,
@@ -38,7 +42,8 @@ module watch_datapath #(
     //msec
     tick_counter_watch #(
         .TIMES          (100), 
-        .BIT_WIDTH      (MSEC_WIDTH)
+        .BIT_WIDTH      (MSEC_WIDTH),
+        .INIT           (MSEC_INIT)
     ) U_MSEC_TICK_COUNTER_WATCH (
         .clk            (clk),
         .rst            (rst),
@@ -54,7 +59,8 @@ module watch_datapath #(
     // sec
     tick_counter_watch #(
         .TIMES          (60), 
-        .BIT_WIDTH      (SEC_WIDTH)
+        .BIT_WIDTH      (SEC_WIDTH),
+        .INIT           (SEC_INIT)
     ) U_SEC_TICK_COUNTER_WATCH (
         .clk            (clk),
         .rst            (rst),
@@ -70,7 +76,8 @@ module watch_datapath #(
     // min
     tick_counter_watch #(
         .TIMES          (60), 
-        .BIT_WIDTH      (MIN_WIDTH)
+        .BIT_WIDTH      (MIN_WIDTH),
+        .INIT           (MIN_INIT)
     ) U_MIN_TICK_COUNTER_WATCH (
         .clk            (clk),
         .rst            (rst),
@@ -86,7 +93,8 @@ module watch_datapath #(
     // hour
     tick_counter_watch #(
         .TIMES          (24), 
-        .BIT_WIDTH      (HOUR_WIDTH)
+        .BIT_WIDTH      (HOUR_WIDTH),
+        .INIT           (HOUR_INIT)
     ) U_HOUR_TICK_COUNTER_WATCH (
         .clk            (clk),
         .rst            (rst),
