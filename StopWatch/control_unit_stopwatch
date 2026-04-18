@@ -1,15 +1,17 @@
-// 26.04.18 Final code
+// 26.04.18 22:06 Final code _ optimize 
 
 `timescale 1ns / 1ps
-module control_unit( 
+module control_unit_stopwatch( 
     input                   clk,
     input                   rst,
-    input                   display,
+    input                   display, // 현재 어떤 모드를 보여주고 있는지 
+                                     // display = 0 : stopwatch , display = 1 : watch
 
+    // 기능 별 FSM 설계 input/output
 	input 	                i_runstop,   
     input                   i_clear,    
     input                   i_mode,  
-    input                   i_set,
+    input                   i_set,   // 특정 시간으로 설정하는 로직
     
 	output	reg	            o_runstop,
 	output	reg             o_clear,
@@ -17,11 +19,13 @@ module control_unit(
     output  reg             o_set
     );
 
-    reg [1:0] c_state, n_state;
     parameter STOP = 2'b00, RUN = 2'b01, CLEAR = 2'b10, MODE = 2'b11;
 
+    reg [1:0] c_state, n_state;
     reg mode_reg, mode_next; 
-    assign o_mode = mode_reg;
+
+    assign o_mode = mode_reg; // output 연결 
+    // 처음부터 o_mode를 reg로 사용해도 되기는 하지만 o_mode의 경우는 state로 표현
 
     // state register 
     always @(posedge clk, posedge rst) begin
@@ -43,7 +47,7 @@ module control_unit(
         o_runstop = 1'b0; 
         o_clear = 1'b0;  
         o_set = 1'b0; 
-        if (display) begin
+        if (display) begin // 현재 stopwatch 설정 상태면
             case (c_state)
                 STOP: begin
                     o_runstop = 1'b0; 
@@ -57,7 +61,8 @@ module control_unit(
                     else if (i_mode) begin
                         n_state = MODE;
                     end
-                    else if (i_set) begin
+                    else if (i_set) begin 
+                        // 별도의 state로 만들 수 있었지만, clock 낭비를 줄이기 위해서 STOP state에서 내보내고 다시 STOP state로 복귀하도록 구성
                         n_state = c_state;
                         o_set = 1'b1;
                     end
@@ -69,7 +74,7 @@ module control_unit(
                     o_runstop = 1'b1; 
                     if (i_runstop) begin 
                         n_state = STOP;
-                    end // else문은 필요없다!
+                    end 
                 end
                 CLEAR: begin 
                     o_clear = 1'b1; 
@@ -81,9 +86,10 @@ module control_unit(
                 end
             endcase
         end
-        else begin
-            n_state = c_state;
-            o_runstop = (c_state == RUN) ? 1'b1 : 1'b0;
+        else begin // 만약 watch에 대해 보고 있으면 stopwatch는 별도로 동작 계속 진행되어야 하니까
+            n_state = c_state; // 동일한 상태를 계속 돌고 있도록
+            o_runstop = (c_state == RUN) ? 1'b1 : 1'b0; // 근데 현재 stopwatch RUN state 유지헤야되서 o_runstop 따로 출력 구성
+            
         end
     end
 
