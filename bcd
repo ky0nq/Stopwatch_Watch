@@ -1,10 +1,6 @@
-// 26.04.18 09:40
-//1. 시간 설정을 가서 sec 부분에서 Left, Right 동작 x
-//2. 스톱워치에서 다운 -> 로직 설계
-//3. state o_place를 4'b0으로 어디서 초기화?
-//4. 시간 설정 DP 점멸 or LED 추가
+// 26.04.18 Final code
 
-` timescale 1ns / 1ps 
+` timescale 1ns / 1ps
 
 module bcd(
 	input 		[3:0]	bin,
@@ -24,10 +20,10 @@ module bcd(
             4'b0111: bcd_data = 8'hF8;
             4'b1000: bcd_data = 8'h80;
             4'b1001: bcd_data = 8'h90;
-            4'b1010: bcd_data = 8'h88;
+            4'b1010: bcd_data = 8'h88; // 여기 하위는 사용 x -> 그러면 여기에서 2개를 상위 2개 DP 
             4'b1011: bcd_data = 8'h83;
             4'b1100: bcd_data = 8'hC6;
-            4'b1101: bcd_data = 8'hA1;
+            4'b1101: bcd_data = 8'hA1; 
             4'b1110: bcd_data = 8'h7F; // dot 켜졌을 때
             4'b1111: bcd_data = 8'hFF; // dot 꺼졌을 때
             default: bcd_data = 8'hFF; 
@@ -35,4 +31,3 @@ module bcd(
     end
 
 endmodule
-
