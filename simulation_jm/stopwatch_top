@@ -1,0 +1,69 @@
+`timescale 1ns / 1ps
+
+module stopwatch_top (
+    input       clk,
+    input       rst,
+    input       sw1,
+    input       btnR,
+    input       btnL,
+    input       btnU,
+    input       btnD,
+
+    output [6:0] msec,
+    output [5:0] sec,
+    output [5:0] min,
+    output [4:0] hour
+);
+
+    parameter   MSEC_WIDTH =    7,
+                SEC_WIDTH  =    6,
+                MIN_WIDTH  =    6,
+                HOUR_WIDTH =    5,
+                MSEC_SET   =    0,  
+                SEC_SET    =    0,  
+                MIN_SET    =    0,  
+                HOUR_SET   =    8;
+
+    wire   [MSEC_WIDTH-1 : 0]  w_msec;
+    wire   [ SEC_WIDTH-1 : 0]  w_sec;
+    wire   [ MIN_WIDTH-1 : 0]  w_min;
+    wire   [HOUR_WIDTH-1 : 0]  w_hour;
+
+
+    control_unit_stopwatch U_CONTROL_UNIT (
+        .clk            (clk),
+        .rst            (rst),
+        .display        (~sw1),
+        .i_runstop      (btnR),   
+        .i_clear        (btnL),    
+        .i_mode         (btnD),
+        .i_set          (btnU),   
+        .o_runstop      (w_runstop),
+        .o_clear        (w_clear),
+        .o_mode         (w_mode),
+        .o_set          (w_set)   
+    );
+
+    stopwatch_datapath  #(
+        .MSEC_WIDTH (MSEC_WIDTH),
+        .SEC_WIDTH  (SEC_WIDTH),
+        .MIN_WIDTH  (MIN_WIDTH),
+        .HOUR_WIDTH (HOUR_WIDTH),
+        .MSEC_SET   (MSEC_SET),
+        .SEC_SET    (SEC_SET),
+        .MIN_SET    (MIN_SET),
+        .HOUR_SET   (HOUR_SET)
+    ) U_STOPWATCH_DATAPATH(
+        .clk            (clk),
+        .rst            (rst),
+        .i_runstop      (w_runstop),
+        .i_clear        (w_clear),
+        .i_mode         (w_mode),
+        .i_set          (w_set),    
+        .msec           (msec),
+        .sec            (sec),
+        .min            (min),
+        .hour           (hour)
+    );
+
+endmodule
