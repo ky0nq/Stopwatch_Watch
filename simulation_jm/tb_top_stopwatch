@@ -1,0 +1,81 @@
+`timescale 1ns / 1ps
+
+module tb_top_stopwatch ();
+
+    reg        clk;
+    reg        rst;
+    reg  [1:0] sw;
+    reg        sw9;
+    reg        btnR;
+    reg        btnL;
+    reg        btnU;
+    reg        btnD;
+
+    wire [7:0] fnd_data;
+    wire [3:0] fnd_com;
+
+    parameter BTN_HOLD = 100_000;  // 100us, debounce 통과용
+    parameter TICK = 10_000_000;  // 10ms = msec 1 증가
+
+    parameter   MSEC_WIDTH =    7,
+                SEC_WIDTH  =    6,
+                MIN_WIDTH  =    6,
+                HOUR_WIDTH =    5,
+                MSEC_SET   =    29,  
+                SEC_SET    =    0,  
+                MIN_SET    =    0,  
+                HOUR_SET   =    0;
+
+
+    top_stopwatch U_TOP_STOPWATCH (
+        .clk     (clk),
+        .rst     (rst),
+        .sw      (sw),
+        .sw9     (sw9),
+        .btnR    (btnR),
+        .btnL    (btnL),
+        .btnU    (btnU),
+        .btnD    (btnD),
+        .fnd_data(fnd_data),
+        .fnd_com (fnd_com)
+    );
+
+    always #5 clk = ~clk;
+
+    initial begin
+        clk  = 0;
+        rst  = 1;
+        sw   = 2'b00;
+        sw9  = 0;
+        btnR = 0;
+        btnL = 0;
+        btnU = 0;
+        btnD = 0;
+
+        repeat (4) @(negedge clk);
+        rst = 0;
+        repeat (4) @(negedge clk);
+
+        btnU = 1;
+        #(BTN_HOLD);
+        btnU = 0;
+        repeat (4) @(negedge clk);
+        #(TICK * 20);  // msec 20 오르는 거 확인
+
+        btnD = 1;
+        #(BTN_HOLD);
+        btnD = 0;
+        repeat (4) @(negedge clk);
+
+        btnR = 1;
+        #(BTN_HOLD);
+        btnR = 0;
+        repeat (4) @(negedge clk);
+        #(TICK * 20);  // msec 20 오르는 거 확인
+
+
+        $stop;
+    end
+
+
+endmodule
