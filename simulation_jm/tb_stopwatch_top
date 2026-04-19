@@ -1,0 +1,103 @@
+`timescale 1ns / 1ps
+
+module tb_stopwatch_top ();
+
+    reg        clk;
+    reg        rst;
+    reg        sw1;
+    reg        i_runstop  ;
+    reg        i_clear    ;
+    reg        i_mode    ;
+    reg        i_set     ;
+
+    wire [6:0] msec;
+    wire [5:0] sec;
+    wire [5:0] min;
+    wire [4:0] hour;
+
+    parameter SEC_DELAY = 1_000_000;
+    parameter MIN_DELAY = 60_000_000;
+
+    stopwatch_top U_STOPWATCH_TOP (
+        .clk (clk),
+        .rst (rst),
+        .sw1 (sw1),
+        .i_runstop(i_runstop),
+        .i_clear  (i_clear  ),
+        .i_mode   (i_mode   ),
+        .i_set    (i_set    ),
+
+        .msec(msec),
+        .sec (sec),
+        .min (min),
+        .hour(hour)
+    );
+
+always #5 clk = ~clk;
+
+initial begin
+    clk = 0;
+    rst = 1;
+    sw1 = 0;
+    i_runstop  = 0;
+    i_clear    = 0;
+    i_mode     = 0;
+    i_set      = 0;
+
+    @(negedge clk);
+    @(negedge clk);
+    @(negedge clk);
+    rst = 0;
+    @(negedge clk);
+    @(negedge clk);
+
+    repeat (10) #(SEC_DELAY);
+    
+    @(negedge clk);
+    @(negedge clk);
+    @(negedge clk);
+    @(negedge clk);
+    
+    @(negedge clk);
+    @(negedge clk);
+    @(negedge clk);
+    @(negedge clk);
+    #25;
+
+    i_set = 1;
+    #10;
+    i_set = 0;
+    #10;
+
+    i_mode = 1;
+    #10;
+    i_mode = 0;
+    #10;
+
+    i_runstop = 1;
+    #10;
+    i_runstop = 0;
+    #10;
+
+
+    @(negedge clk);
+    @(negedge clk);
+    @(negedge clk);
+    @(negedge clk);
+
+
+    @(negedge clk);
+    @(negedge clk);
+    @(negedge clk);
+    @(negedge clk);
+    @(negedge clk);
+
+
+    #(SEC_DELAY);
+
+    #(MIN_DELAY);
+
+    $stop;
+end
+
+endmodule
