@@ -1,0 +1,74 @@
+`timescale 1ns / 1ps
+
+module tb_top_watch();
+
+    reg        clk, rst;
+    reg  [2:0] sw;
+    reg        sw9;
+    reg        btnR, btnL, btnU, btnD;
+
+    wire [7:0] fnd_data;
+    wire [3:0] fnd_com;
+    wire [2:0] o_led;
+    wire       o_led9;
+    wire [3:0] o_led_wt_set;
+
+    parameter SEC_DELAY = 10_000_000;    
+    parameter BTN_HOLD  = 100_000;       
+
+    top_watch dut (
+        .clk          (clk),
+        .rst          (rst),
+        .sw           (sw),
+        .sw9          (sw9),
+        .btnR         (btnR),
+        .btnL         (btnL),
+        .btnU         (btnU),
+        .btnD         (btnD),
+        .fnd_data     (fnd_data),
+        .fnd_com      (fnd_com),
+        .o_led        (o_led),
+        .o_led9       (o_led9),
+        .o_led_wt_set (o_led_wt_set)
+    );
+
+    always #5 clk = ~clk;
+
+    initial begin
+        clk = 0; rst = 1;
+        sw = 3'b010; sw9 = 0;
+        btnR = 0; btnL = 0; btnU = 0; btnD = 0;
+
+        repeat(4) @(negedge clk);
+        rst = 0;
+        repeat(4) @(negedge clk);
+
+        sw = 3'b010;
+        #(SEC_DELAY * 3); // 3초 흐르기
+
+        sw = 3'b011;
+        #(SEC_DELAY * 2);
+
+        sw = 3'b111;
+        repeat(8) @(negedge clk);
+
+
+        btnU = 1; #(BTN_HOLD); btnU = 0;
+        repeat(4) @(negedge clk);
+
+        btnR = 1; #(BTN_HOLD); btnR = 0;
+        repeat(4) @(negedge clk);
+
+        sw = 3'b011;
+        #(SEC_DELAY * 2);
+
+        sw9 = 1;
+        #(SEC_DELAY);
+        sw9 = 0;
+
+        sw = 3'b010;
+
+        $stop;
+    end
+
+endmodule
