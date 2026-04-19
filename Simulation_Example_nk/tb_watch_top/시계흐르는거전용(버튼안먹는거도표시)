@@ -42,8 +42,7 @@ module tb_watch_top ();
     initial begin
         clk  = 0;
         rst  = 1;
-        // 스톱워치 sec.msec 상태
-        sw   = 3'b000;
+        sw   = 3'b010;
 
         btnR = 0;
         btnL = 0;
@@ -58,7 +57,12 @@ module tb_watch_top ();
         @(negedge clk);
         // 시계 시간모드 sec.msec
         sw   = 3'b010;
-        repeat (10) #(SEC_DELAY);
+        @(negedge clk);
+        @(negedge clk);
+        @(negedge clk);
+        @(negedge clk);
+        @(negedge clk);
+        @(negedge clk);
         // 시계 시간모드 hour.min
         sw   = 3'b011;
         @(negedge clk);
