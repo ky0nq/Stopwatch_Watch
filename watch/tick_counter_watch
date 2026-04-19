@@ -1,4 +1,5 @@
-// 26.04.18 22:06 Final code _ optimize 
+// 26.04.19 15:03 Final code _ optimize 
+// tick counter sw2_and_1 signal 추가해야 맞음
 
 `timescale 1ns / 1ps
 
@@ -11,7 +12,7 @@ module tick_counter_watch #(
     input                        rst,
     input                        i_tick,
     
-    //input                        sw1, <<확인해보기>>
+    input                        sw2_and_1, 
     input                        place,
     input                        i_up,
     input                        i_down,
@@ -47,25 +48,31 @@ module tick_counter_watch #(
             end
         end 
         else begin // 설정 모드
-            if (place) begin // control_unit_watch에서 받은 위치 정보가 존재하면
-                if (i_up) begin // up
-                    counter_next = counter_reg + 1;
-                    if (counter_reg == (TIMES - 1)) begin
-                        counter_next = 0;
-                        o_tick = 1'b0;
+            if (sw2_and_1) begin // 설정 모드
+                if (place) begin // control_unit_watch에서 받은 위치 정보가 존재하면
+                    if (i_up) begin // up
+                        counter_next = counter_reg + 1;
+                        if (counter_reg == (TIMES - 1)) begin
+                            counter_next = 0;
+                            o_tick = 1'b0;
+                        end
                     end
-                end
-                else if (i_down) begin // down
-                    counter_next = counter_reg - 1;
-                    if (counter_reg == 0) begin
-                        counter_next = TIMES - 1;
-                        o_tick = 1'b0;
+                    else if (i_down) begin // down
+                        counter_next = counter_reg - 1;
+                        if (counter_reg == 0) begin
+                            counter_next = TIMES - 1;
+                            o_tick = 1'b0;
+                        end
                     end
+                    else begin // 아무것도 안 하면 유지
+                        counter_next = counter_reg;
+                        o_tick = 1'b0;
+                    end 
                 end
-                else begin // 아무것도 안 하면 유지
+                else begin // 설정 모드인데 위치가 안 들어오면 그냥 머물기
                     counter_next = counter_reg;
                     o_tick = 1'b0;
-                end 
+                end
             end
         end
     end
