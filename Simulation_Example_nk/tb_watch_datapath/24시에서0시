@@ -1,0 +1,83 @@
+`timescale 1ns / 1ps
+
+module tb_watch_datapath( );
+    parameter SEC_DELAY = 1_000_000; 
+    parameter MIN_DELAY = 60_000_000;
+
+    reg         clk;
+    reg         rst;
+    reg         sw2_and_1;
+    reg  [3:0]  place;
+    reg         i_up;
+    reg         i_down;
+    wire [6:0]  msec;
+    wire [5:0]  sec;
+    wire [5:0]  min;
+    wire [4:0]  hour;
+
+watch_datapath #(
+    .MSEC_WIDTH(7),
+    .SEC_WIDTH (6),
+    .MIN_WIDTH (6),
+    .HOUR_WIDTH(5),
+    .MSEC_INIT(0),
+    .SEC_INIT (59),
+    .MIN_INIT (59),
+    .HOUR_INIT(23)
+) dut(
+   .clk         (clk),
+   .rst         (rst),
+   .sw2_and_1   (sw2_and_1),
+   .place       (place),
+   .i_up        (i_up),
+   .i_down      (i_down),
+   .msec        (msec),
+   .sec         (sec),
+   .min         (min),
+   .hour        (hour)
+);
+
+always #5 clk = ~clk;
+
+initial begin
+    clk = 0;
+    rst = 1;
+    sw2_and_1 = 1'b0; // 시계-시간모드
+    place = 4'b0000;  // place x
+    i_up   = 0;
+    i_down = 0;
+
+    @(negedge clk);
+    @(negedge clk);
+    @(negedge clk);
+    rst = 0;
+    @(negedge clk);
+    @(negedge clk);
+
+    repeat (10) #(SEC_DELAY);
+    i_up   = 1;
+    #80_000;
+    i_up   = 0;
+
+    @(negedge clk);
+    @(negedge clk);
+    @(negedge clk);
+    @(negedge clk);
+
+    i_down = 1;
+    #80_000;
+    i_down = 0;
+    @(negedge clk);
+    @(negedge clk);
+    @(negedge clk);
+    @(negedge clk);
+    @(negedge clk);
+
+    #(SEC_DELAY);
+
+    #(MIN_DELAY);
+
+    $stop;
+end
+
+endmodule
