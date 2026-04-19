@@ -1,0 +1,119 @@
+// 이게 watch 전체 동작
+
+`timescale 1ns / 1ps
+
+module top_watch(
+    input           clk,
+    input           rst,
+    input   [2:0]   sw,
+    input           sw9,
+    input           btnR,
+    input           btnL,
+    input           btnU,
+    input           btnD,
+
+    output  [7:0]   fnd_data,
+    output  [3:0]   fnd_com,
+    output  [2:0]   o_led,
+    output          o_led9,
+    output  [3:0]   o_led_wt_set
+    );
+    
+    parameter   MSEC_WIDTH =    7,
+                SEC_WIDTH  =    6,
+                MIN_WIDTH  =    6,
+                HOUR_WIDTH =    5,
+                MSEC_INIT =     0,
+                SEC_INIT  =     0,
+                MIN_INIT  =     0,
+                HOUR_INIT =     12;  
+
+    wire   [MSEC_WIDTH-1 : 0]  w_msec_wt;
+    wire   [ SEC_WIDTH-1 : 0]  w_sec_wt;
+    wire   [ MIN_WIDTH-1 : 0]  w_min_wt;
+    wire   [HOUR_WIDTH-1 : 0]  w_hour_wt;
+
+    wire    w_btnR, w_btnL, w_btnD, w_btnU;
+    wire [3:0] w_place;
+
+    button_debounce U_BTNR(
+        .clk            (clk),
+        .rst            (rst),
+        .i_Btn          (btnR),
+        .o_Btn          (w_btnR)
+    );
+
+    button_debounce U_BTNL(
+        .clk            (clk),
+        .rst            (rst),
+        .i_Btn          (btnL),
+        .o_Btn          (w_btnL)
+    );
+
+    button_debounce U_BTND(
+        .clk            (clk),
+        .rst            (rst),
+        .i_Btn          (btnD),
+        .o_Btn          (w_btnD)
+    );
+
+    button_debounce U_BTNU(
+        .clk            (clk),
+        .rst            (rst),
+        .i_Btn          (btnU),
+        .o_Btn          (w_btnU)
+    );
+
+    // watch
+    control_unit_watch U_CNT_WATCH ( 
+        .clk            (clk),
+        .rst            (rst),
+        .display        (sw[1]),
+        .i_left         (w_btnL),   
+        .i_right        (w_btnR),    
+        .sw             (sw), 
+        .o_place        (w_place),
+        .o_led2         (o_led[2]),
+        .o_led1         (o_led[1]),
+        .o_led_wt_set   (o_led_wt_set)
+        );
+
+    watch_datapath # (
+        .MSEC_WIDTH (MSEC_WIDTH),
+        .SEC_WIDTH  (SEC_WIDTH),
+        .MIN_WIDTH  (MIN_WIDTH),
+        .HOUR_WIDTH (HOUR_WIDTH),
+        .MSEC_INIT (MSEC_INIT),
+        .SEC_INIT  (SEC_INIT),
+        .MIN_INIT  (MIN_INIT),
+        .HOUR_INIT (HOUR_INIT)
+    ) U_WATCH_DATAPATH(
+        .clk            (clk),
+        .rst            (rst),
+        .sw2_and_1      (sw[2] & sw[1]),
+        .place          (w_place),
+        .i_up           (w_btnU),
+        .i_down         (w_btnD),
+        .msec           (w_msec_wt),
+        .sec            (w_sec_wt),
+        .min            (w_min_wt),
+        .hour           (w_hour_wt)
+    );
+    
+    fnd_controller U_FND_CNTL (
+        .clk            (clk),
+        .rst            (rst),
+        .sw0            (sw[0]),
+        .sw1            (sw[1]),
+        .sw9            (sw9),
+        .msec           (w_msec_wt),
+        .sec            (w_sec_wt),
+        .min            (w_min_wt),
+        .hour           (w_hour_wt),
+        .fnd_com        (fnd_com),
+        .fnd_data       (fnd_data),
+        .o_led0         (o_led[0]),
+        .o_led9         (o_led9)
+    );
+
+endmodule
