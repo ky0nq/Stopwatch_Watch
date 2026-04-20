@@ -1,4 +1,4 @@
-// 26.04.18 22:06 Final code _ optimize 
+// 26.04.21 FSM 수정
 
 `timescale 1ns / 1ps
 
@@ -41,100 +41,55 @@ module control_unit_watch (
         end
     end
 
-    // next, output CL
+    // next state CL (combinational)
     always @(*) begin
-        n_state = c_state; 
-        o_place = 4'b0000;
-        if (display) begin // 버튼 공유하고 있으니까 watch를 보고 있을 때만 버튼을 반영
+        n_state = c_state;
+        if (display) begin
             case (c_state)
                 RUN : begin
-                    o_place  = 4'b0000; 
-                    if (sw[1] & sw[2]) begin // 시계 - 설정모드
-                        n_state = HOUR;
-                        o_place = 4'b1000;
-                    end 
-                    else begin // 시계 - 시간
-                        n_state = c_state;
-                    end
+                    if (sw[1] & sw[2]) n_state = HOUR;
+                    else               n_state = RUN;
                 end
                 HOUR: begin
-                    // 시계 - 시간모드 or 시계 - 설정 모드 이지만 stopwatch로 넘어갔을 때
-                    if ((!sw[1]) | (!sw[2])) begin 
-                        n_state = RUN; // 설정하고 있다가 스톱워치가도 우리는 시간을 고정안하고 흐르게 한다
-                        o_place  = 4'b0000; 
-                    end
-                    else if (i_left) begin 
-                        n_state = MSEC;
-                        o_place = 4'b0001;
-                    end
-                    else if (i_right) begin
-                        n_state = MIN;
-                        o_place = 4'b0100;
-                    end
-                    else begin          
-                        n_state = c_state;
-                        o_place = 4'b1000;
-                    end
+                    if ((!sw[1]) | (!sw[2]))  n_state = RUN;
+                    else if (i_left)          n_state = MSEC;
+                    else if (i_right)         n_state = MIN;
+                    else                      n_state = HOUR;
                 end
                 MIN: begin
-                    if ((!sw[1]) | (!sw[2])) begin
-                        n_state = RUN;
-                        o_place  = 4'b0000; 
-                    end
-                    else if (i_left) begin 
-                        n_state = HOUR;
-                        o_place = 4'b1000;
-                    end
-                    else if (i_right) begin
-                        n_state = SEC;
-                        o_place = 4'b0010;
-                    end 
-                    else begin          
-                        n_state = c_state;
-                        o_place = 4'b0100;
-                    end
+                    if ((!sw[1]) | (!sw[2]))  n_state = RUN;
+                    else if (i_left)          n_state = HOUR;
+                    else if (i_right)         n_state = SEC;
+                    else                      n_state = MIN;
                 end
                 SEC: begin
-                    if ((!sw[1]) | (!sw[2])) begin
-                        n_state = RUN;
-                        o_place  = 4'b0000; 
-                    end
-                    else if (i_left) begin 
-                        n_state = MIN;
-                        o_place = 4'b0100;
-                    end
-                    else if (i_right) begin
-                        n_state = MSEC;
-                        o_place = 4'b0001;
-                    end 
-                    else begin          
-                        n_state = c_state;
-                        o_place = 4'b0010;
-                    end
+                    if ((!sw[1]) | (!sw[2]))  n_state = RUN;
+                    else if (i_left)          n_state = MIN;
+                    else if (i_right)         n_state = MSEC;
+                    else                      n_state = SEC;
                 end
                 MSEC: begin
-                    if ((!sw[1]) | (!sw[2])) begin
-                        n_state = RUN;
-                        o_place  = 4'b0000; 
-                    end
-                    else if (i_left) begin 
-                        n_state = SEC;
-                        o_place = 4'b0010;
-                    end
-                    else if (i_right) begin
-                        n_state = HOUR;
-                        o_place = 4'b1000;
-                    end
-                    else begin          
-                        n_state = c_state;
-                        o_place = 4'b0001;
-                    end
+                    if ((!sw[1]) | (!sw[2]))  n_state = RUN;
+                    else if (i_left)          n_state = SEC;
+                    else if (i_right)         n_state = HOUR;
+                    else                      n_state = MSEC;
                 end
             endcase
         end
-        else begin // 스톱워치 모드일 때 계속 실행되도록
+        else begin
             n_state = c_state;
-            o_place  = 4'b0000; 
         end
+    end
+
+    // output CL - c_state 기반으로 o_place 결정 (registered output)
+    always @(*) begin
+        case (c_state)
+            RUN  : o_place = 4'b0000;
+            HOUR : o_place = 4'b1000;
+            MIN  : o_place = 4'b0100;
+            SEC  : o_place = 4'b0010;
+            MSEC : o_place = 4'b0001;
+            default: o_place = 4'b0000;
+        endcase
     end
 endmodule
